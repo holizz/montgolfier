@@ -34,10 +34,13 @@ class ReadlineInterface():
             try:
                 s = input('> ')
             except KeyboardInterrupt:
+                self.xmpp.disconnect()
                 break
             except EOFError:
+                self.xmpp.disconnect()
                 break
             if s == '/quit' or s == '/exit':
+                self.xmpp.disconnect()
                 break
             elif s.startswith('/connect '):
                 self.connect(s.split()[1], s.split()[2])
@@ -45,13 +48,13 @@ class ReadlineInterface():
                 self.msg(s.split()[1], s.split()[2])
 
     def connect(self, jid, password):
-        xmpp = Client(jid, password)
+        self.xmpp = Client(jid, password)
 
-        if xmpp.connect():
-            xmpp.process(threaded=True)
+        if self.xmpp.connect():
+            self.xmpp.process(threaded=True)
 
-    #def msg(self, jid, message):
-        #hhh
+    def msg(self, jid, body):
+        self.xmpp.send_message(jid, body, mtype='chat')
 
 
 if __name__ == '__main__':
