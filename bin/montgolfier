@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+
+import logging
+
+import sleekxmpp
+
+
+class Client(sleekxmpp.ClientXMPP):
+    """A simple interface to SleekXMPP
+
+    """
+
+    def __init__(self, jid, password):
+        sleekxmpp.ClientXMPP.__init__(self, jid, password)
+
+        self.add_event_handler("session_start", self.start)
+        self.add_event_handler("message", self.message)
+
+    def start(self, event):
+        self.get_roster()
+        self.send_presence()
+
+    def message(self, msg):
+        print('<'+msg['from'].full+'> '+msg['body'])
+        msg.reply("Thanks for sending\n%(body)s" % msg).send()
+
+
+class ReadlineInterface():
+    def __init__(self):
+        pass
+
+    def start(self):
+        while True:
+            try:
+                s = input('> ')
+            except KeyboardInterrupt:
+                break
+            except EOFError:
+                break
+            if s == '/quit' or s == '/exit':
+                break
+            elif s.startswith('/connect '):
+                self.connect(s.split()[1], s.split()[2])
+            elif s.startswith('/msg '):
+                self.msg(s.split()[1], s.split()[2])
+
+    def connect(self, jid, password):
+        xmpp = Client(jid, password)
+
+        if xmpp.connect():
+            xmpp.process(threaded=True)
+
+    #def msg(self, jid, message):
+        #hhh
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(levelname)-8s %(message)s')
+
+    r = ReadlineInterface()
+    r.start()
