@@ -44,6 +44,11 @@ class LineParserTest(unittest.TestCase):
         self.assertEqual(self.c(0)['target'], 'tank@example.net')
         self.assertEqual(self.c(0)['body'], 'hi there')
 
+        self._connect('a@b.c')
+        self.lp.connection_context = 0
+        self.lp.parse('/msg -account a@b.c target@example.org Message')
+        self.assertEqual(self.c(1)['target'], 'target@example.org')
+
     def testMessageContext(self):
         """Both these messages should go to the same user:
         > /msg a@b.c Message 1
