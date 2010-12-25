@@ -137,3 +137,21 @@ class LineParserTest(unittest.TestCase):
         self.assertEqual(self.output.queue[-1][1], None)
         self.assertEqual(self.output.queue[-1][2], None)
         self.assertEqual(self.output.queue[-1][3], 'Accounts:\n0: a@b.c')
+
+    def testFailure(self):
+        self.lp.parse('/accounts')
+        self.assertEqual(len(self.output.queue), 1)
+        self.assertEqual(self.output.queue[-1][0], LineParser.INFO)
+        self.assertEqual(self.output.queue[-1][1], None)
+        self.assertEqual(self.output.queue[-1][2], None)
+        self.assertEqual(self.output.queue[-1][3], 'No accounts connected')
+
+        self._connect('a@b.c')
+
+        self.lp.parse('/hoobyfroob')
+        self.assertEqual(len(self.output.queue), 3)
+        self.assertEqual(self.output.queue[-1][0], LineParser.ERROR)
+        self.assertEqual(self.output.queue[-1][1], 0)
+        self.assertEqual(self.output.queue[-1][2], None)
+        self.assertEqual(self.output.queue[-1][3],
+                         'No such command: "hoobyfroob"')

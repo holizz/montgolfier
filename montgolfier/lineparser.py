@@ -20,6 +20,7 @@ class LineGenerator:
 class LineParser:
     INFO = 1
     MESSAGE_SENT = 2
+    ERROR = 2
 
     def __init__(self, client_class, output):
         self.client_class = client_class
@@ -41,7 +42,13 @@ class LineParser:
         c = m.groups()[0]
         rem = m.groups()[2]
 
-        getattr(self, '_'+c)(LineGenerator(rem))
+        if hasattr(self, '_'+c):
+            getattr(self, '_'+c)(LineGenerator(rem))
+        else:
+            self.output.enqueue(level=LineParser.ERROR,
+                    connection=self.connection_context,
+                    message_context=self.message_context,
+                    data='No such command: "%s"'%c)
 
     ##
     ## Bits and bobs
@@ -107,9 +114,12 @@ class LineParser:
                 data=body)
 
     def _accounts(self, line):
-        data = 'Accounts:\n'
-        for i in range(len(self.connections)):
-            data += '%d: %s' % (i, self.connections[i].jid)
+        if self.connections:
+            data = 'Accounts:\n'
+            for i in range(len(self.connections)):
+                data += '%d: %s' % (i, self.connections[i].jid)
+        else:
+            data = 'No accounts connected'
 
         self.output.enqueue(level=LineParser.INFO,
                 connection=None,
