@@ -9,6 +9,9 @@ class FakeClient:
         self.__dict__['password'] = password
 
     def connect(self):
+        return True
+
+    def process(self, threaded):
         pass
 
     def message(self, jid, body):
@@ -16,9 +19,18 @@ class FakeClient:
         self.__dict__['body'] = body
 
 
+class FakeOutput:
+    def __init__(self):
+        self.queue = []
+
+    def enqueue(self, level, connection, message_context, data):
+        self.queue.append((level, connection, message_context, data))
+
+
 class LineParserTest(unittest.TestCase):
     def setUp(self):
-        self.lp = LineParser(client=FakeClient)
+        self.output = FakeOutput()
+        self.lp = LineParser(client_class=FakeClient, output=self.output)
 
     def _connect(self, jid='tom_tester@example.org', password='password'):
         self.lp.parse('/connect %s %s' % (jid, password))
@@ -100,3 +112,18 @@ class LineParserTest(unittest.TestCase):
         self.lp.connection_context = 0
         self.lp.parse('/msg t@n.k Message')
         self.assertEqual(self.c(0)['target'], 't@n.k')
+
+    def testCommandOutput(self):
+        self._connect()
+        self.assertEqual(len(self.output.queue), 1)
+        self.assertEqual(self.output.queue[-1][0], LineParser.INFO)
+        self.assertEqual(self.output.queue[-1][1], 0)
+        self.assertEqual(self.output.queue[-1][2], None)
+        self.assertEqual(self.output.queue[-1][3], 'Connected!')
+
+        self.lp.parse('/msg a@b.c Message')
+        self.assertEqual(len(self.output.queue), 2)
+        self.assertEqual(self.output.queue[-1][0], LineParser.MESSAGE_SENT)
+        self.assertEqual(self.output.queue[-1][1], 0)
+        self.assertEqual(self.output.queue[-1][2], 'a@b.c')
+        self.assertEqual(self.output.queue[-1][3], 'Message')

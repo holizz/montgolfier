@@ -18,8 +18,12 @@ class LineGenerator:
 
 
 class LineParser:
-    def __init__(self, client):
-        self.client = client
+    INFO = 1
+    MESSAGE_SENT = 2
+
+    def __init__(self, client_class, output):
+        self.client_class = client_class
+        self.output = output
         self.connections = []
 
     def parse(self, cmd):
@@ -37,13 +41,18 @@ class LineParser:
         jid = next(line)
         password = next(line)
 
-        conn = self.client(jid, password)
+        conn = self.client_class(jid, password)
 
         if conn.connect():
             conn.process(threaded=True)
 
-        self.connections.append(conn)
-        self.connection_context = len(self.connections) - 1
+            self.connections.append(conn)
+            self.connection_context = len(self.connections) - 1
+
+            self.output.enqueue(level=LineParser.INFO,
+                    connection=self.connection_context,
+                    message_context=None,
+                    data='Connected!')
 
     def _msg(self, line, noargs=False):
         # jid and -account
@@ -62,6 +71,10 @@ class LineParser:
 
         # Send it
         self.connections[self.connection_context].message(jid, body)
+        self.output.enqueue(level=LineParser.MESSAGE_SENT,
+                connection=self.connection_context,
+                message_context=jid,
+                data=body)
 
     def bare(self, jid):
         return sleekxmpp.xmlstream.JID(jid).bare
