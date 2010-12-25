@@ -1,3 +1,8 @@
+import re
+
+import sleekxmpp
+
+
 class LineParser:
     def __init__(self, client):
         self.client = client
@@ -43,10 +48,17 @@ class LineParser:
         # Send it
         self.connections[self.connection_context].message(jid, body)
 
+    def bare(self, jid):
+        return sleekxmpp.xmlstream.JID(jid).bare
+
     def get_connection(self, jid):
-        for i in range(len(self.connections)):
-            if self.connections[i].jid == jid:
-                return i
+        if re.match('^\d$', jid ):
+            return int(jid)
+        for j in (jid, self.bare(jid)):
+            for i in range(len(self.connections)):
+                connjid = self.connections[i].jid
+                if connjid == j or self.bare(connjid) == j:
+                    return i
         raise IndexError
 
     def set_connection(self, jid):

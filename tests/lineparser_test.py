@@ -49,6 +49,17 @@ class LineParserTest(unittest.TestCase):
         self.lp.parse('/msg -account a@b.c target@example.org Message')
         self.assertEqual(self.c(1)['target'], 'target@example.org')
 
+    def testAccountSettingWithoutResource(self):
+        self._connect('a@b.c/CustomResource')
+        self.lp.parse('/msg -account a@b.c target@example.org Message')
+        self.assertEqual(self.c(0)['target'], 'target@example.org')
+
+    def testAccountSettingViaNumber(self):
+        self._connect('a@b.c')
+        self._connect('d@e.f')
+        self.lp.parse('/msg -account 0 target@example.org Message')
+        self.assertEqual(self.c(0)['target'], 'target@example.org')
+
     def testMessageContext(self):
         """Both these messages should go to the same user:
         > /msg a@b.c Message 1
