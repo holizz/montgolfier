@@ -25,17 +25,47 @@ class LineParser:
         self.client_class = client_class
         self.output = output
         self.connections = []
+        self.message_context = None
+
+    ##
+    ## Parser
+    ##
 
     def parse(self, cmd):
-        m = re.match(r'^/(\S+)\s+(.*)$', cmd, re.DOTALL|re.MULTILINE)
+        m = re.match(r'^/(\S+)(\s+(.*))?$', cmd, re.DOTALL|re.MULTILINE)
 
         if not m:
             self._msg(LineGenerator(cmd), noargs=True)
             return
 
-        c, rem = m.groups()
+        c = m.groups()[0]
+        rem = m.groups()[2]
 
         getattr(self, '_'+c)(LineGenerator(rem))
+
+    ##
+    ## Bits and bobs
+    ##
+
+    def bare(self, jid):
+        return sleekxmpp.xmlstream.JID(jid).bare
+
+    def get_connection(self, jid):
+        if re.match('^\d$', jid ):
+            return int(jid)
+        for j in (jid, self.bare(jid)):
+            for i in range(len(self.connections)):
+                connjid = self.connections[i].jid
+                if connjid == j or self.bare(connjid) == j:
+                    return i
+        raise IndexError
+
+    def set_connection(self, jid):
+        self.connection_context = self.get_connection(jid)
+
+    ##
+    ## Commands
+    ##
 
     def _connect(self, line):
         jid = next(line)
@@ -76,18 +106,12 @@ class LineParser:
                 message_context=jid,
                 data=body)
 
-    def bare(self, jid):
-        return sleekxmpp.xmlstream.JID(jid).bare
+    def _accounts(self, line):
+        data = 'Accounts:\n'
+        for i in range(len(self.connections)):
+            data += '%d: %s' % (i, self.connections[i].jid)
 
-    def get_connection(self, jid):
-        if re.match('^\d$', jid ):
-            return int(jid)
-        for j in (jid, self.bare(jid)):
-            for i in range(len(self.connections)):
-                connjid = self.connections[i].jid
-                if connjid == j or self.bare(connjid) == j:
-                    return i
-        raise IndexError
-
-    def set_connection(self, jid):
-        self.connection_context = self.get_connection(jid)
+        self.output.enqueue(level=LineParser.INFO,
+                connection=None,
+                message_context=None,
+                data=data)

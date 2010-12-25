@@ -127,3 +127,13 @@ class LineParserTest(unittest.TestCase):
         self.assertEqual(self.output.queue[-1][1], 0)
         self.assertEqual(self.output.queue[-1][2], 'a@b.c')
         self.assertEqual(self.output.queue[-1][3], 'Message')
+
+    def testAccountsCommand(self):
+        self._connect('a@b.c')
+
+        self.lp.parse('/accounts')
+        self.assertEqual(len(self.output.queue), 2)
+        self.assertEqual(self.output.queue[-1][0], LineParser.INFO)
+        self.assertEqual(self.output.queue[-1][1], None)
+        self.assertEqual(self.output.queue[-1][2], None)
+        self.assertEqual(self.output.queue[-1][3], 'Accounts:\n0: a@b.c')
