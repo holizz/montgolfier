@@ -81,6 +81,16 @@ class LineParserTest(unittest.TestCase):
 
         self.assertEqual(self.c(0)['target'], 'unicorn@moon.org')
 
+    def testArgumentFidelity(self):
+        """ '/msg a@b.c foo\tbar' should be passed with whitespace intact
+
+        """
+        self._connect()
+        self.lp.parse('/msg unicorn@moon.org Message\n1')
+        self.assertEqual(self.c(0)['body'], 'Message\n1')
+        self.lp.parse('Message\t2')
+        self.assertEqual(self.c(0)['body'], 'Message\t2')
+
     def testConnectionContext(self):
         self._connect()
         self._connect()

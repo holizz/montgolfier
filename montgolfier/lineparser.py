@@ -3,23 +3,39 @@ import re
 import sleekxmpp
 
 
+class LineGenerator:
+    def __init__(self, line):
+        self.line = line
+
+    def __next__(self):
+        m = re.match(r'^([\S]+)\s+(.*)$',
+                self.line, re.DOTALL|re.MULTILINE)
+        if not m:
+            return self.line
+
+        c, self.line = m.groups()
+        return c
+
+
 class LineParser:
     def __init__(self, client):
         self.client = client
         self.connections = []
 
     def parse(self, cmd):
-        c = cmd.split()
-        if c[0] == '/connect':
-            self._connect(*c[1:])
-        elif c[0] == '/msg':
-            self._msg(*c[1:])
-        else:
-            self._msg(None, cmd)
+        m = re.match(r'^/(\S+)\s+(.*)$', cmd, re.DOTALL|re.MULTILINE)
 
-    def _connect(self, jid, password=None):
-        if password == None:
-            raise NotImplementedError
+        if not m:
+            self._msg(LineGenerator(cmd), noargs=True)
+            return
+
+        c, rem = m.groups()
+
+        getattr(self, '_'+c)(LineGenerator(rem))
+
+    def _connect(self, line):
+        jid = next(line)
+        password = next(line)
 
         conn = self.client(jid, password)
 
@@ -29,21 +45,20 @@ class LineParser:
         self.connections.append(conn)
         self.connection_context = len(self.connections) - 1
 
-    def _msg(self, *args):
-        args = list(args)
-
-        # -account
-        if args[0] == '-account':
-            args.pop(0)
-            self.set_connection(args.pop(0))
-
-        # jid, body
-        jid = args.pop(0)
-        body = ' '.join(args)
-        if jid:
-            self.message_context = jid
-        else:
+    def _msg(self, line, noargs=False):
+        # jid and -account
+        if noargs:
             jid = self.message_context
+        else:
+            a = next(line)
+            if a == '-account':
+                self.set_connection(next(line))
+                jid = next(line)
+            else:
+                jid = a
+
+        self.message_context = jid
+        body = line.line
 
         # Send it
         self.connections[self.connection_context].message(jid, body)
