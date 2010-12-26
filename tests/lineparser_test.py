@@ -4,17 +4,15 @@ from montgolfier.lineparser import LineParser
 
 
 class FakeClient:
-    def __init__(self, jid, password):
+    def __init__(self, lp, jid, password):
+        self.lp = lp
         self.__dict__['jid'] = jid
         self.__dict__['password'] = password
 
     def connect(self):
-        return True
+        self.lp.callback_connected(self)
 
-    def process(self, threaded):
-        pass
-
-    def message(self, jid, body):
+    def send_message(self, jid, body, mtype):
         self.__dict__['target'] = jid
         self.__dict__['body'] = body
 

@@ -78,18 +78,17 @@ class LineParser:
         jid = next(line)
         password = next(line)
 
-        conn = self.client_class(jid, password)
+        conn = self.client_class(self, jid, password)
+        conn.connect()
 
-        if conn.connect():
-            conn.process(threaded=True)
+    def callback_connected(self, conn):
+        self.connections.append(conn)
+        self.connection_context = len(self.connections) - 1
 
-            self.connections.append(conn)
-            self.connection_context = len(self.connections) - 1
-
-            self.output.enqueue(level=LineParser.INFO,
-                    connection=self.connection_context,
-                    message_context=None,
-                    data='Connected!')
+        self.output.enqueue(level=LineParser.INFO,
+                connection=self.connection_context,
+                message_context=None,
+                data='Connected!')
 
     def _msg(self, line, noargs=False):
         # jid and -account
@@ -107,7 +106,7 @@ class LineParser:
         body = line.line
 
         # Send it
-        self.connections[self.connection_context].message(jid, body)
+        self.connections[self.connection_context].send_message(jid, body, mtype='chat')
         self.output.enqueue(level=LineParser.MESSAGE_SENT,
                 connection=self.connection_context,
                 message_context=jid,
