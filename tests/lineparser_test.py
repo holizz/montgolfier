@@ -3,14 +3,20 @@ import unittest
 from montgolfier.lineparser import LineParser
 
 
+class FakeJID:
+    def __init__(self, jid):
+        self.bare = jid
+
+
 class FakeClient:
     def __init__(self, lp, jid, password):
         self.lp = lp
         self.__dict__['jid'] = jid
         self.__dict__['password'] = password
+        self.boundjid = FakeJID(jid)
 
     def connect(self):
-        self.lp.callback_connected(self)
+        self.lp.connected(self)
 
     def send_message(self, jid, body, mtype):
         self.__dict__['target'] = jid

@@ -17,13 +17,10 @@ class Client(sleekxmpp.ClientXMPP):
             self.process(threaded=True)
 
     def session_start(self, event):
-        print('conected')
-        self.lp.callback_connected(self)
+        self.lp.connected(self)
 
         self.get_roster()
         self.send_presence()
 
     def message(self, msg):
-        #TODO: send this up to LP
-        print('<'+msg['from'].full+'> '+msg['body'])
-        msg.reply("Thanks for sending\n%(body)s" % msg).send()
+        self.lp.message_received(self, msg['from'].bare, msg['body'])
