@@ -34,7 +34,7 @@ class FakeOutput:
 class LineParserTest(unittest.TestCase):
     def setUp(self):
         self.output = FakeOutput()
-        self.lp = LineParser(client_class=FakeClient, output=self.output)
+        self.lp = LineParser(client_class=FakeClient, ui=self.output)
 
     def _connect(self, jid='tom_tester@example.org', password='password'):
         self.lp.parse('/connect %s %s' % (jid, password))
