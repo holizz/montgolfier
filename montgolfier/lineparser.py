@@ -23,10 +23,11 @@ class LineParser:
     ERROR = 3
     MESSAGE_RECEIVED = 4
 
-    def __init__(self, client_class, output):
+    def __init__(self, client_class, ui):
         self.client_class = client_class
-        self.output = output
+        self.ui = ui
         self.connections = []
+        self.connection_context = None
         self.message_context = None
 
     ##
@@ -46,7 +47,7 @@ class LineParser:
         if hasattr(self, '_'+c):
             getattr(self, '_'+c)(LineGenerator(rem))
         else:
-            self.output.enqueue(level=LineParser.ERROR,
+            self.ui.enqueue(level=LineParser.ERROR,
                     connection=self.connection_context,
                     message_context=self.message_context,
                     data='No such command: "%s"'%c)
@@ -79,16 +80,20 @@ class LineParser:
         self.connections.append(conn)
         self.connection_context = len(self.connections) - 1
 
-        self.output.enqueue(level=LineParser.INFO,
+        self.ui.enqueue(level=LineParser.INFO,
                 connection=self.get_connection(conn.boundjid.bare),
                 message_context=None,
                 data='Connected!')
 
     def message_received(self, conn, jid, body):
-        self.output.enqueue(level=LineParser.MESSAGE_RECEIVED,
+        self.ui.enqueue(level=LineParser.MESSAGE_RECEIVED,
                 connection=self.get_connection(conn.boundjid.bare),
                 message_context=jid,
                 data=body)
+
+    def quit(self):
+        #TODO: disconnect gracefully
+        self.ui.quit()
 
     ##
     ## Commands
@@ -118,7 +123,7 @@ class LineParser:
 
         # Send it
         self.connections[self.connection_context].send_message(jid, body, mtype='chat')
-        self.output.enqueue(level=LineParser.MESSAGE_SENT,
+        self.ui.enqueue(level=LineParser.MESSAGE_SENT,
                 connection=self.connection_context,
                 message_context=jid,
                 data=body)
@@ -131,7 +136,10 @@ class LineParser:
         else:
             data = 'No accounts connected'
 
-        self.output.enqueue(level=LineParser.INFO,
+        self.ui.enqueue(level=LineParser.INFO,
                 connection=None,
                 message_context=None,
                 data=data)
+
+    def _quit(self, line):
+        self.quit()
