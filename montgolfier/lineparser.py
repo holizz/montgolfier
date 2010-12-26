@@ -11,7 +11,9 @@ class LineGenerator:
         m = re.match(r'^([\S]+)\s+(.*)$',
                 self.line, re.DOTALL|re.MULTILINE)
         if not m:
-            return self.line
+            l = self.line
+            self.line = None
+            return l
 
         c, self.line = m.groups()
         return c
@@ -120,6 +122,12 @@ class LineParser:
 
         self.message_context = jid
         body = line.line
+        if body == None:
+            self.ui.enqueue(level=LineParser.ERROR,
+                    connection=self.connection_context,
+                    message_context=None,
+                    data='Usage: /msg [jid] [message]')
+            return
 
         # Send it
         self.connections[self.connection_context].send_message(jid, body, mtype='chat')
