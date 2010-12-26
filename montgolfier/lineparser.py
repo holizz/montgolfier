@@ -125,7 +125,7 @@ class LineParser:
         if body == None:
             self.ui.enqueue(level=LineParser.ERROR,
                     connection=self.connection_context,
-                    message_context=None,
+                    message_context=self.message_context,
                     data='Usage: /msg [jid] [message]')
             return
 

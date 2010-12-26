@@ -164,6 +164,6 @@ class LineParserTest(unittest.TestCase):
         self.assertEqual(len(self.output.queue), 4)
         self.assertEqual(self.output.queue[-1][0], LineParser.ERROR)
         self.assertEqual(self.output.queue[-1][1], 0)
-        self.assertEqual(self.output.queue[-1][2], None)
+        self.assertEqual(self.output.queue[-1][2], 'd@e.f')
         self.assertEqual(self.output.queue[-1][3],
                 'Usage: /msg [jid] [message]')
