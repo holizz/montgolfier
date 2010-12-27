@@ -4,14 +4,8 @@ import logging
 
 import sleekxmpp
 
-from montgolfier.lineparser import LineParser
-from montgolfier.client import Client
-from montgolfier.ui import UI
+import montgolfier
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG,
-                        format='%(levelname)-8s %(message)s')
-
-    ui = UI(client_class=Client, lineparser_class=LineParser)
-    ui.mainloop()
+    montgolfier.run()

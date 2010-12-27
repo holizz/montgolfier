@@ -1,6 +1,8 @@
+import logging
 import unittest
 
-from montgolfier.lineparser import LineParser
+import montgolfier
+from montgolfier import LineParser, LogHandler
 
 
 class FakeJID:
@@ -35,6 +37,9 @@ class LineParserTest(unittest.TestCase):
     def setUp(self):
         self.output = FakeOutput()
         self.lp = LineParser(client_class=FakeClient, ui=self.output)
+        self.output.lp = self.lp
+        logging.getLogger().addHandler(LogHandler(self.output))
+        logging.getLogger().setLevel(logging.DEBUG)
 
     def _connect(self, jid='tom_tester@example.org', password='password'):
         self.lp.parse('/connect %s %s' % (jid, password))
@@ -157,7 +162,9 @@ class LineParserTest(unittest.TestCase):
         self.assertEqual(self.output.queue[-1][0], LineParser.ERROR)
         self.assertEqual(self.output.queue[-1][1], 0)
         self.assertEqual(self.output.queue[-1][2], None)
-        self.assertEqual(self.output.queue[-1][3],
+        self.assertEqual(type(self.output.queue[-1][3]), logging.LogRecord)
+        self.assertEqual(self.output.queue[-1][3].levelname, 'ERROR')
+        self.assertEqual(self.output.queue[-1][3].msg,
                          'No such command: "hoobyfroob"')
 
         self.lp.parse('/msg d@e.f')
@@ -165,5 +172,7 @@ class LineParserTest(unittest.TestCase):
         self.assertEqual(self.output.queue[-1][0], LineParser.ERROR)
         self.assertEqual(self.output.queue[-1][1], 0)
         self.assertEqual(self.output.queue[-1][2], 'd@e.f')
-        self.assertEqual(self.output.queue[-1][3],
+        self.assertEqual(type(self.output.queue[-1][3]), logging.LogRecord)
+        self.assertEqual(self.output.queue[-1][3].levelname, 'ERROR')
+        self.assertEqual(self.output.queue[-1][3].msg,
                 'Usage: /msg [jid] [message]')

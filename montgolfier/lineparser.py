@@ -1,3 +1,4 @@
+import logging
 import re
 
 import sleekxmpp
@@ -49,10 +50,7 @@ class LineParser:
         if hasattr(self, '_'+c):
             getattr(self, '_'+c)(LineGenerator(rem))
         else:
-            self.ui.enqueue(level=LineParser.ERROR,
-                    connection=self.connection_context,
-                    message_context=self.message_context,
-                    data='No such command: "%s"'%c)
+            logging.error('No such command: "%s"'%c)
 
     ##
     ## Bits and bobs
@@ -123,18 +121,15 @@ class LineParser:
         self.message_context = jid
         body = line.line
         if body == None:
-            self.ui.enqueue(level=LineParser.ERROR,
-                    connection=self.connection_context,
-                    message_context=self.message_context,
-                    data='Usage: /msg [jid] [message]')
-            return
+            logging.error('Usage: /msg [jid] [message]')
 
-        # Send it
-        self.connections[self.connection_context].send_message(jid, body, mtype='chat')
-        self.ui.enqueue(level=LineParser.MESSAGE_SENT,
-                connection=self.connection_context,
-                message_context=jid,
-                data=body)
+        else:
+            # Send it
+            self.connections[self.connection_context].send_message(jid, body, mtype='chat')
+            self.ui.enqueue(level=LineParser.MESSAGE_SENT,
+                    connection=self.connection_context,
+                    message_context=jid,
+                    data=body)
 
     def _accounts(self, line):
         if self.connections:
